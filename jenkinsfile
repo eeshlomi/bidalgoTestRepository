@@ -1,9 +1,18 @@
 pipeline {
     agent any
     stages {
-        stage('Example') {
+        stage('test') {
             	steps {
+		        sleep(time:2,unit:"MINUTES")
                		sh 'echo $(git log -n 1 --pretty=format:"%H")'
+            }
+	stage('merge'){
+	        steps{
+		    retry(2){
+		        sh 'STATE=`git rev-list --left-right --count origin/master...$(git branch --show-current) | awk "{print $1}"`'
+			
+                    }
+		}
             }
         }
     }
@@ -13,3 +22,4 @@ pipeline {
         }
     }
 }
+
