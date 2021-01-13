@@ -2,24 +2,31 @@ pipeline {
     agent any
     stages {
         stage('test') {
-            	steps {
-		        sleep(time:2,unit:"MINUTES")
-               		sh 'echo $(git log -n 1 --pretty=format:"%H")'
+            steps {
+                sleep(time:2,unit:"MINUTES")
+                sh 'echo $(git log -n 1 --pretty=format:"%H")'
+                sh 'STATE=`git rev-list --left-right --count origin/master...$(git branch --show-current) | awk "{print $1}"`'
+			    }
             }
-	stage('merge'){
-	        steps{
-		    retry(2){
-		        sh 'STATE=`git rev-list --left-right --count origin/master...$(git branch --show-current) | awk "{print $1}"`'
-			
-                    }
-		}
+        stage('merge-and-retest'){
+            when { not { equals expected: 0, actual: env.STATE } }
+            steps{
+                sh 'git merge origin/master'
+                sleep(time:2,unit:"MINUTES")
+                sh 'echo $(git log -n 1 --pretty=format:"%H")'
+                sh 'STATE=`git rev-list --left-right --count origin/master...$(git branch --show-current) | awk "{print $1}"`'
+                }
+            }
+        stage('verify-merge'){
+            when { not { equals expected: 0, actual: env.STATE } }
+            steps{
+                error("Could not merge into master")
+                }
+            }
+        stage('merge'){
+            steps{
+                sh 'git merge origin/master'
+                }
             }
         }
-    }
-    post { 
-        success { 
-            echo 'successul build'
-        }
-    }
 }
-
