@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Example') {
             	steps {
-               		echo 'This is an example.'
+               		sh 'echo $(git log -n 1 --pretty=format:"%H")'
             }
         }
     }
